@@ -1,10 +1,12 @@
 import socketio
 from random import randint,choice
 import math
+from rules import *
 #main socket
 sio = socketio.Client()
 userName=input("add username:  ")
-tournamentId=int(input("tournament id:  "))
+#tournamentId=int(input("tournament id:  "))
+tournamentId=input("tournament id:  ")
 
 def human_board(board):
     tileRep = ['_', 'X', 'O']
@@ -24,16 +26,27 @@ def validateHumanPosition(position,data):
     #print(board[val],len(board))
     return board[position]==0
 
-def ix(row,col):
-    index='abcdefgh'.index(col)
-    val=(int(row)-1)*8+index 
-    return val
-def play():
-    move=""
+
+def play(board,player_id):
     #alph=['a','b','d','f','g','h']
-    move += str(randint(0,63))
+    #move += str(randint(0,63))
     #move += choice(alph)
-    return move
+#uses validateMove to get all posible valid choices 
+    valid=[]
+    for i in range(len(board)):
+        x = math.floor(i/8)
+        y = i % 8
+        check =validateMove(board,player_id,x,y)
+        if not check:
+            continue
+        valid.append(i)
+    action=valid[randint(0,len(valid)-1)]
+    #if len(action)<=0:
+    #    return  
+    #else:
+    return action
+    
+    
     """
     move=""
     alph=['a','b','d','f','g','h']
@@ -54,19 +67,20 @@ def on_connect():
 
 @sio.on('ready')
 def on_ready(data):
-    movement = randint(0,63)
+    #movement = randint(0,63)
     
-    while not validateHumanPosition(movement,data):
-        movement=randint(0,63)
-    print("movement",movement)
-    print("board",data['board'])
-    print("player",data['player_turn_id'])
+   # while not validateHumanPosition(movement,data):
+    #movement=randint(0,63)
+    #print("movement",movement)
+    #print("board",data['board'])
+    #print("player",data['player_turn_id'])
+    print(visualizer(data['board']))
     sio.emit('play',
     {
         "player_turn_id":data['player_turn_id'],
         "tournament_id":tournamentId,
         "game_id":data['game_id'],
-        "movement":movement#x(movement[0],movement[1])
+        "movement":play(data['board'],data['player_turn_id'])
     })
 @sio.on('finish')
 def on_finish(data):
@@ -77,4 +91,4 @@ def on_finish(data):
         "player_turn_id":data['player_turn_id']
     })
 
-sio.connect("http://192.168.1.127:4000")
+sio.connect("http://192.168.1.148:4000")
